@@ -17,6 +17,9 @@ class Zipper(val config: ZipperConfig) {
       new BufferedOutputStream(
 	new FileOutputStream(config.zipfileName)))
   private var curFile: Long = config.innerFilenameStart
+
+  private var closeCalled = false
+  private val lock = new Object
   // END CONSTRUCTOR
 
   private def curFilenameAndInc(): String = {
@@ -27,18 +30,29 @@ class Zipper(val config: ZipperConfig) {
   }
 
   def addFile(contents: String) {
-    output.putNextEntry(new ZipEntry(curFilenameAndInc()))
-    val writer = new PrintWriter(output)
-    writer.print(contents)
-    writer.flush();
-    // we intentionally don't close the writer, which would close the
-    // ZipOutputStream
-    output.closeEntry()
+    lock.synchronized {
+      if (!closeCalled) {
+	output.putNextEntry(new ZipEntry(curFilenameAndInc()))
+	val writer = new PrintWriter(output)
+	writer.print(contents)
+	writer.flush();
+	// we intentionally don't close the writer, which would close the
+	// ZipOutputStream
+	output.closeEntry()
+      }
+    }
   }
 
   def close() {
-    output.finish()
-    output.close()
+    if (!closeCalled) {
+      lock.synchronized {
+	if (!closeCalled) {
+	  closeCalled = true
+	  output.finish()
+	  output.close()
+	}
+      }
+    }
   }
 }
 

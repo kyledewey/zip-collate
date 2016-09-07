@@ -28,6 +28,13 @@ object Main {
 			   baseFilename,
 			   fileExtension,
 			   parseNonNegative(startNum)))
+	  Runtime.getRuntime.addShutdownHook(
+	    new Thread(
+	      new Runnable {
+		def run() {
+		  zipper.close()
+		}
+	      }))
 	  import scala.io.StdIn.readLine
 	  var line: String = readLine()
 	  while (line ne null) {
