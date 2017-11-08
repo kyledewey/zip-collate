@@ -1,22 +1,53 @@
 package zip_collate
 
-class ArgsHandler(val numRequired: Int,
-		  val optional: List[String], // defaults
-		  val usage: String) {
-  assert(numRequired >= 0)
+import java.io.File
+import scopt.OptionParser
 
-  // produces actual arguments list
-  def parseArguments(args: Array[String]): Option[List[String]] = {
-    if (args.length < numRequired) {
-      println(usage)
-      println("Missing required arguments")
-      None
-    } else if (args.length > numRequired + optional.size) {
-      println(usage)
-      println("Too many arguments")
-      None
-    } else {
-      Some(args.toList ++ optional.drop(args.size - numRequired))
-    }
-  } ensuring(_.map(_.size == numRequired + optional.size).getOrElse(true))
+case class ArgsConfig(zipFile: Option[File] = None,
+                      baseFileName: String = "file",
+                      fileExtension: String = "",
+                      startNum: Long = 0,
+                      delim: Option[String] = None) {
+  def toArgs(): Args = {
+    assert(zipFile.isDefined)
+    Args(zipFile.get,
+         baseFileName,
+         fileExtension,
+         startNum,
+         delim)
+  }
+}
+
+case class Args(zipFile: File,
+                baseFileName: String,
+                fileExtension: String,
+                startNum: Long,
+                delim: Option[String])
+
+object ArgsParser extends scopt.OptionParser[ArgsConfig]("zip-collate") {
+  head("zip-collate")
+
+  opt[String]('b', "base_filename")
+    .action((b, c) => c.copy(baseFileName = b))
+    .text("base filename")
+
+  opt[String]('e', "file_extension")
+    .action((e, c) => c.copy(fileExtension = e))
+    .text("file extension")
+
+  opt[Long]('s', "start_num")
+    .action((l, c) => c.copy(startNum = l))
+    .text("starting file number")
+
+  opt[String]('d', "delimiter")
+    .action((d, c) => c.copy(delim = Some(d)))
+    .text("delimiter between files")
+
+  arg[File]("zip file")
+    .required
+    .action((f, c) => c.copy(zipFile = Some(f)))
+
+  def parse(args: Array[String]): Option[Args] = {
+    parse(args, ArgsConfig()).map(_.toArgs)
+  }
 }

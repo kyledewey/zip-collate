@@ -1,22 +1,16 @@
 package zip_collate
 
-case class ZipperConfig(zipfileName: String,
-			innerFilenameBase: String,
-			innerFilenameExtension: String,
-			innerFilenameStart: Long) {
-  assert(innerFilenameStart >= 0L)
-}
+import java.io._
 
-class Zipper(val config: ZipperConfig) {
-  import java.io._
+class Zipper(val config: Args) {
   import java.util.zip.{ZipEntry, ZipOutputStream}
 
   // BEGIN CONSTRUCTOR
   private val output =
     new ZipOutputStream(
       new BufferedOutputStream(
-	new FileOutputStream(config.zipfileName)))
-  private var curFile: Long = config.innerFilenameStart
+	new FileOutputStream(config.zipFile)))
+  private var curFile: Long = config.startNum
 
   private var closeCalled = false
   private val lock = new Object
@@ -24,7 +18,7 @@ class Zipper(val config: ZipperConfig) {
 
   private def curFilenameAndInc(): String = {
     val retval =
-      config.innerFilenameBase + curFile.toString + config.innerFilenameExtension
+      config.baseFileName + curFile.toString + config.fileExtension
     curFile += 1L
     retval
   }
