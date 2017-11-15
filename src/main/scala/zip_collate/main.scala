@@ -42,9 +42,12 @@ object Main {
       readWithDelim(args.delim)
     }
 
+    var numRead: Long = 0l
     var item: Option[String] = readOne()
     while (item.isDefined) {
       zipper.addFile(item.get)
+      numRead += 1l
+      args.maybePrintUpdate(numRead)
       item = readOne()
     }
 
